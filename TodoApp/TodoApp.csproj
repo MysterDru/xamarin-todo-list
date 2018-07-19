@@ -21,8 +21,11 @@
     <PackageReference Include="Acr.UserDialogs" Version="7.0.1" />
     <PackageReference Include="MonkeyCache" Version="0.1.0.10-beta" />
     <PackageReference Include="PropertyChanged.Fody" Version="2.5.8" />
+    <PackageReference Include="MonkeyCache.FileStore" Version="0.1.0.10-beta" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ViewModels\" />
+    <Folder Include="Models\" />
+    <Folder Include="Repositories\" />
   </ItemGroup>
 </Project>
