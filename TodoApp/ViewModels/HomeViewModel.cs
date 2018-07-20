@@ -16,6 +16,8 @@ namespace TodoApp.ViewModels
 		readonly IUserDialogs _dialogs;
 		readonly ITodoRepository _repo;
 
+		bool _isInitialized = false;
+
 		public IEnumerable<Models.TodoList> TodoLists { get; private set; }
 
 		public IMvxCommand AddNewItem => new MvxAsyncCommand(ExecuteAddNewtItem);
@@ -28,18 +30,37 @@ namespace TodoApp.ViewModels
 			_repo = repo;
 		}
 
+		public override async void ViewAppearing()
+		{
+			base.ViewAppearing();
+
+			// reload data in the event "IsActive" changed
+			// or a list was deleted
+			if (_isInitialized)
+			{
+				await LoadData();
+			}
+		}
+
 		public override async Task Initialize()
 		{
 			this.Title = "Drew's To-Do";
 
-			var lists = await _repo.GetLists();
-
-			TodoLists = lists ?? new List<Models.TodoList>();
+			await LoadData();
 
 			if (!TodoLists.Any())
 			{
 				AddNewItem.Execute();
 			}
+
+			_isInitialized = true;
+		}
+
+		async Task LoadData()
+		{
+			var lists = await _repo.GetLists();
+
+			TodoLists = lists ?? new List<Models.TodoList>();
 		}
 
 		private async Task ExecuteAddNewtItem()
@@ -50,7 +71,21 @@ namespace TodoApp.ViewModels
 
 			var newItemTitle = result.Value;
 
-			var created = await _repo.AddList(new Models.TodoList { Title = newItemTitle });
+			bool makeActive = true;
+			if (this.TodoLists.Any(x => x.IsActive))
+			{
+				makeActive = await _dialogs.ConfirmAsync(
+					$"Do you want to make list '{result.Value}' your active list?",
+					"Active List",
+					okText: "Yes",
+					cancelText: "No");
+			}
+
+			var created = await _repo.AddList(new Models.TodoList
+			{
+				Title = newItemTitle,
+				IsActive = makeActive
+			});
 
 			var copy = TodoLists.ToList();
 			copy.Add(created);
@@ -60,7 +95,7 @@ namespace TodoApp.ViewModels
 
 		private async Task ExecuteSelectItem(TodoList arg)
 		{
-			this.NavigationService.Navigate<ListInfoViewModel, ListInfoViewModel.Parameter>(new ListInfoViewModel.Parameter
+			await this.NavigationService.Navigate<ListInfoViewModel, ListInfoViewModel.Parameter>(new ListInfoViewModel.Parameter
 			{
 				List = arg
 			});

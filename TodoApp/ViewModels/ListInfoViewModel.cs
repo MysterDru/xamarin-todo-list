@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using Acr.UserDialogs;
 using MvvmCross.Commands;
+using TodoApp.Models;
 using TodoApp.Repositories;
 
 namespace TodoApp.ViewModels
@@ -8,21 +13,33 @@ namespace TodoApp.ViewModels
 	public class ListInfoViewModel : BaseViewModel<ListInfoViewModel.Parameter>
 	{
 		ITodoRepository _repo;
+		IUserDialogs _dialogs;
 		Models.TodoList _list;
+
+		public ObservableCollection<Models.ToDoItem> Items { get; private set; }
+
+		public IMvxCommand ShowOptions => new MvxAsyncCommand(ExecuteShowOptions);
 
 		public IMvxCommand AddNewItem => new MvxAsyncCommand(ExecuteAddNewtItem);
 
-		public ListInfoViewModel(ITodoRepository repo)
+		public IMvxCommand DeleteItem => new MvxAsyncCommand<Models.ToDoItem>(ExecuteDeleteItem);
+
+		public ListInfoViewModel(
+			ITodoRepository repo,
+			IUserDialogs dialogs)
 		{
 			_repo = repo;
+			_dialogs = dialogs;
 		}
 
-		public override Task Initialize()
+		public override async Task Initialize()
 		{
 			//return base.Initialize();
 			Title = _list.Title;
 
-			return base.Initialize();
+			var items = await _repo.GetItems(_list.Id);
+
+			Items = new ObservableCollection<Models.ToDoItem>(items ?? new List<Models.ToDoItem>());
 		}
 
 		public override void Prepare(Parameter parameter)
@@ -30,9 +47,74 @@ namespace TodoApp.ViewModels
 			_list = parameter.List;
 		}
 
-		Task ExecuteAddNewtItem()
+		async Task ExecuteAddNewtItem()
 		{
-			throw new NotImplementedException();
+			if (!_list.IsActive)
+			{
+				await _dialogs.AlertAsync(
+					message: "The list must be active to add items to it.",
+					title: "Active List");
+
+				return;
+			}
+
+			var result = await _dialogs.PromptAsync(
+				message: "Name Task",
+				title: "Add New Task");
+
+			var newItemTitle = result.Value;
+
+			var item = new Models.ToDoItem
+			{
+				Title = newItemTitle
+			};
+
+			item = await _repo.AddItem(_list.Id, item);
+
+			Items.Add(item);
+		}
+
+		private async Task ExecuteDeleteItem(ToDoItem arg)
+		{
+			await _repo.RemoveItem(_list.Id, arg.Id);
+
+			Items.Remove(arg);
+		}
+
+		async Task ExecuteShowOptions()
+		{
+			bool isActive = _list.IsActive;
+			var action = await _dialogs.ActionSheetAsync(
+				"Options",
+				"Cancel",
+				"Delete",
+				null,
+				isActive ? "Deactivate" : "Activate");
+
+			if (action == "Delete")
+			{
+				await DeleteList();
+			}
+			else if (action == "Deactivate")
+			{
+				await ChangeListState(false);
+			}
+			else if (action == "Activate")
+			{
+				await ChangeListState(true);
+			}
+		}
+
+		async Task DeleteList()
+		{
+			await this._repo.RemoveList(this._list.Id);
+
+			await NavigationService.Close(this);
+		}
+
+		async Task ChangeListState(bool isActive)
+		{
+			// todo
 		}
 
 		public class Parameter

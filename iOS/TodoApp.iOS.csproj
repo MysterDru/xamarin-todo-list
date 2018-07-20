@@ -123,6 +123,7 @@
     <InterfaceDefinition Include="LaunchScreen.storyboard" />
     <InterfaceDefinition Include="Main.storyboard" />
     <InterfaceDefinition Include="Views\HomeView.storyboard" />
+    <InterfaceDefinition Include="Views\ListInfoView.storyboard" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -139,6 +140,10 @@
     <Compile Include="Views\HomeView.cs" />
     <Compile Include="Views\HomeView.designer.cs">
       <DependentUpon>HomeView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ListInfoView.cs" />
+    <Compile Include="Views\ListInfoView.designer.cs">
+      <DependentUpon>ListInfoView.cs</DependentUpon>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
