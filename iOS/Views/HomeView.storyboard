@@ -17,6 +17,21 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <view key="tableFooterView" contentMode="scaleToFill" id="exX-wH-d1B">
+                            <rect key="frame" x="0.0" y="72" width="375" height="44"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <subviews>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ckk-2w-f0O">
+                                    <rect key="frame" x="156" y="7" width="62" height="30"/>
+                                    <state key="normal" title="Add Item"/>
+                                </button>
+                            </subviews>
+                            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <constraints>
+                                <constraint firstItem="Ckk-2w-f0O" firstAttribute="centerY" secondItem="exX-wH-d1B" secondAttribute="centerY" id="HtT-VN-Dk3"/>
+                                <constraint firstItem="Ckk-2w-f0O" firstAttribute="centerX" secondItem="exX-wH-d1B" secondAttribute="centerX" id="PnK-WU-tMf"/>
+                            </constraints>
+                        </view>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="eF5-oj-tPV">
                                 <rect key="frame" x="0.0" y="28" width="375" height="44"/>
@@ -32,6 +47,9 @@
                             <outlet property="delegate" destination="SjJ-7E-GqP" id="iYl-xM-oEC"/>
                         </connections>
                     </tableView>
+                    <connections>
+                        <outlet property="AddButton" destination="Ckk-2w-f0O" id="XIo-ZZ-Kl6"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="tMd-tq-Ss4" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

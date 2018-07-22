@@ -13,7 +13,13 @@ namespace TodoApp.Repositories
 
 		Task<TodoList> AddList(TodoList list);
 
+		Task UpdateList(Guid id, TodoList list);
+
 		Task RemoveList(Guid id);
+
+		Task DeactivateList(Guid listId);
+
+		Task ActivateList(Guid listId);
 
 		Task<IEnumerable<ToDoItem>> GetItems(Guid listId);
 
@@ -22,83 +28,62 @@ namespace TodoApp.Repositories
 		Task RemoveItem(Guid listId, Guid itemId);
 	}
 
-	public class TodoRepository : ITodoRepository
+	public class TodoRepository : BaseRepository, ITodoRepository
 	{
-		IBarrel barrel;
+		const string LIST_KEY = "todoLists";
 
 		public TodoRepository(IBarrel barrel)
+			: base(barrel)
 		{
-			this.barrel = barrel;
 		}
 
-		public async Task<IEnumerable<TodoList>> GetLists()
-		{
-			IEnumerable<TodoList> lists = null;
+		public Task<TodoList> GetList(Guid listId) => Get<TodoList>(LIST_KEY, listId);
 
-			await Task.Run(() =>
+		public Task<IEnumerable<TodoList>> GetLists() => Get<TodoList>(LIST_KEY);
+
+		public Task<TodoList> AddList(TodoList newList) => base.Create(LIST_KEY, newList);
+
+		public Task UpdateList(Guid id, TodoList list) => base.Update(LIST_KEY, id, list);
+
+		public Task RemoveList(Guid id) => base.Delete<TodoList>(LIST_KEY, id);
+
+		public Task<IEnumerable<ToDoItem>> GetItems(Guid listId) => base.Get<ToDoItem>(KeyForItem(listId));
+
+		public Task<ToDoItem> AddItem(Guid listId, ToDoItem item) => base.Create<ToDoItem>(KeyForItem(listId), item);
+
+		public Task RemoveItem(Guid listId, Guid itemId) => base.Delete<ToDoItem>(KeyForItem(listId), itemId);
+
+		public async Task DeactivateList(Guid listId)
+		{
+			var allItems = (await GetLists()).ToList();
+
+			foreach(var item in allItems)
 			{
-				lists = barrel.Get<IEnumerable<Models.TodoList>>("todoLists");
-			});
+				// just deactivate all lists for simplicity right now
+				item.IsActive = false;
+			}
 
-			return lists ?? new List<TodoList>();
+			await this.Save(LIST_KEY, allItems);
 		}
 
-		public async Task<TodoList> AddList(TodoList newList)
+		public async Task ActivateList(Guid listId)
 		{
-			newList.Id = Guid.NewGuid();
+			var allItems = await GetLists();
 
-			var list = (await GetLists()).ToList();
-			list.Add(newList);
-
-			barrel.Add("todoLists", list, TimeSpan.FromDays(600));
-
-			return newList;
-		}
-
-		public async Task RemoveList(Guid id)
-		{
-			var list = (await GetLists()).ToList();
-			var found = list.FirstOrDefault(x => x.Id == id);
-
-			list.Remove(found);
-
-			barrel.Add("todoLists", list, TimeSpan.FromDays(600));
-		}
-
-		public async Task<IEnumerable<ToDoItem>> GetItems(Guid listId)
-		{
-			return await Task.Run(() =>
+			foreach (var item in allItems)
 			{
-				string listKey = listId.ToString().Replace("-", string.Empty);
-				var values = barrel.Get<IEnumerable<ToDoItem>>($"ToDoItem{listKey}");
+				// active the the target list
+				item.IsActive = item.Id == listId;
+			}
 
-				return values;
-			});
+			await this.Save(LIST_KEY, allItems);
 		}
 
-		public async Task<ToDoItem> AddItem(Guid listId, ToDoItem item)
+
+		string KeyForItem(Guid listId)
 		{
-			var items = (await GetItems(listId))?.ToList() ?? new List<ToDoItem>();
-
-			item.Id = Guid.NewGuid();
-			items.Add(item);
-
 			string listKey = listId.ToString().Replace("-", string.Empty);
-			barrel.Add($"ToDoItem{listKey}", items, TimeSpan.FromDays(600));
-
-			return item;
-		}
-
-		public async Task RemoveItem(Guid listId, Guid itemId)
-		{
-			var items = (await GetItems(itemId))?.ToList() ?? new List<ToDoItem>();
-
-			var item = items.FirstOrDefault(x => x.Id == itemId);
-
-			items.Remove(item);
-
-			string listKey = listId.ToString().Replace("-", string.Empty);
-			barrel.Add($"ToDoItem{listKey}", items, TimeSpan.FromDays(600));
+			return $"ToDoItem{listKey}";
 		}
 	}
 }

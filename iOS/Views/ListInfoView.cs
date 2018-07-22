@@ -24,26 +24,45 @@ namespace TodoApp.iOS.Views
 		{
 			base.ViewDidLoad();
 
-			var options = new UIBarButtonItem(UIBarButtonSystemItem.Action);
-			var add = new UIBarButtonItem(UIBarButtonSystemItem.Add);
+			this.Title = "Todo List Info";
 
-			this.NavigationItem.RightBarButtonItems = new UIBarButtonItem[] { options, add };
+			UpdateDescriptionStyle();
+
+			var save = new UIBarButtonItem(UIBarButtonSystemItem.Save);
+			var options = new UIBarButtonItem(UIImage.FromBundle("ic_more"), UIBarButtonItemStyle.Done, null);
+
+			this.NavigationItem.RightBarButtonItems = new UIBarButtonItem[] { options, save };
 
 			var source = new MvxStandardTableViewSource(this.TableView, "TitleText Title;");
 			TableView.Source = source;
 
 			var set = this.CreateBindingSet<ListInfoView, ViewModels.ListInfoViewModel>();
-			set.Bind(source)
-			   .For(x => x.ItemsSource)
-			   .To(vm => vm.Items);
 			set.Bind(NavigationItem)
 			   .For(x => x.Title)
 			   .To(vm => vm.Title);
-			set.Bind(add)
+			set.Bind(source)
+			   .For(x => x.ItemsSource)
+			   .To(vm => vm.Items);
+			set.Bind(TitleTextField)
+			   .To(vm => vm.ListTitle);
+			set.Bind(DescrptionTextView)
+			   .To(vm => vm.ListDescription);
+			set.Bind(AddButton)
 			   .To(vm => vm.AddNewItem);
+			set.Bind(save)
+			   .To(vm => vm.SaveList);
 			set.Bind(options)
 			   .To(vm => vm.ShowOptions);
 			set.Apply();
+		}
+
+		private void UpdateDescriptionStyle()
+		{
+			DescrptionTextView.Layer.BackgroundColor = UIColor.White.CGColor;
+			DescrptionTextView.Layer.BorderColor = UIColor.Gray.CGColor;
+			DescrptionTextView.Layer.BorderWidth = 0.5f;
+			DescrptionTextView.Layer.CornerRadius = 6.0f;
+			DescrptionTextView.Layer.MasksToBounds = true;
 		}
 	}
 }

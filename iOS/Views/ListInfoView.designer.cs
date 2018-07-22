@@ -12,9 +12,31 @@ namespace TodoApp.iOS.Views
 	[Register ("ListInfoView")]
 	partial class ListInfoView
 	{
+		[Outlet]
+		UIKit.UIButton AddButton { get; set; }
+
+		[Outlet]
+		UIKit.UITextView DescrptionTextView { get; set; }
+
+		[Outlet]
+		UIKit.UITextField TitleTextField { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (AddButton != null) {
+				AddButton.Dispose ();
+				AddButton = null;
+			}
+
+			if (DescrptionTextView != null) {
+				DescrptionTextView.Dispose ();
+				DescrptionTextView = null;
+			}
+
+			if (TitleTextField != null) {
+				TitleTextField.Dispose ();
+				TitleTextField = null;
+			}
 		}
 	}
 }

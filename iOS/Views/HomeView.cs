@@ -22,9 +22,6 @@ namespace TodoApp.iOS.Views
 		{
 			base.ViewDidLoad();
 
-			var add = new UIBarButtonItem(UIBarButtonSystemItem.Add);
-			this.NavigationItem.RightBarButtonItem = add;
-
 			var source = new MvxStandardTableViewSource(this.TableView, "TitleText Title;");
 			TableView.Source = source;
 
@@ -38,7 +35,7 @@ namespace TodoApp.iOS.Views
 			set.Bind(NavigationItem)
 			   .For(x => x.Title)
 			   .To(vm => vm.Title);
-			set.Bind(add)
+			set.Bind(AddButton)
 			   .To(vm => vm.AddNewItem);
 			set.Apply();
 		}

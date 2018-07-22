@@ -1,10 +1,8 @@
 ﻿using System;
 namespace TodoApp.Models
 {
-    public class ToDoItem
+	public class ToDoItem : BaseModel
     {
-		public Guid Id { get; set; }
-
 		public string Title { get; set; }
 
 		public string Notes { get; set; }

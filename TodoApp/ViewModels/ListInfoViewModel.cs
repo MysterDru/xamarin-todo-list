@@ -16,6 +16,11 @@ namespace TodoApp.ViewModels
 		IUserDialogs _dialogs;
 		Models.TodoList _list;
 
+		public string ListTitle { get; private set; }
+		public string ListDescription { get; private set; }
+
+		public IMvxCommand SaveList => new MvxAsyncCommand(ExecuteSaveList);
+
 		public ObservableCollection<Models.ToDoItem> Items { get; private set; }
 
 		public IMvxCommand ShowOptions => new MvxAsyncCommand(ExecuteShowOptions);
@@ -35,7 +40,10 @@ namespace TodoApp.ViewModels
 		public override async Task Initialize()
 		{
 			//return base.Initialize();
-			Title = _list.Title;
+			Title = "List Info";
+
+			ListTitle = _list.Title;
+			ListDescription = _list.Description;
 
 			var items = await _repo.GetItems(_list.Id);
 
@@ -47,38 +55,60 @@ namespace TodoApp.ViewModels
 			_list = parameter.List;
 		}
 
-		async Task ExecuteAddNewtItem()
+		async Task ExecuteSaveList()
 		{
-			if (!_list.IsActive)
+			if (string.IsNullOrEmpty(Title))
 			{
-				await _dialogs.AlertAsync(
-					message: "The list must be active to add items to it.",
-					title: "Active List");
-
+				await _dialogs.AlertAsync("Title is required");
 				return;
 			}
 
-			var result = await _dialogs.PromptAsync(
-				message: "Name Task",
-				title: "Add New Task");
+			_list.Title = this.ListTitle;
+			_list.Description = this.ListDescription;
 
-			var newItemTitle = result.Value;
+			await _repo.UpdateList(_list.Id, _list);
+		}
 
-			var item = new Models.ToDoItem
+		async Task ExecuteAddNewtItem()
+		{
+			if (await CheckActive())
 			{
-				Title = newItemTitle
-			};
+				var result = await _dialogs.PromptAsync(
+					message: "Name Task",
+					title: "Add New Task");
 
-			item = await _repo.AddItem(_list.Id, item);
+				var newItemTitle = result.Value;
 
-			Items.Add(item);
+				var item = new Models.ToDoItem
+				{
+					Title = newItemTitle
+				};
+
+				item = await _repo.AddItem(_list.Id, item);
+
+				Items.Add(item);
+			}
 		}
 
 		private async Task ExecuteDeleteItem(ToDoItem arg)
 		{
-			await _repo.RemoveItem(_list.Id, arg.Id);
+			if (await CheckActive())
+			{
+				await _repo.RemoveItem(_list.Id, arg.Id);
 
-			Items.Remove(arg);
+				Items.Remove(arg);
+			}
+		}
+
+		async Task<bool> CheckActive()
+		{
+			if (!_list.IsActive)
+			{
+				await _dialogs.AlertAsync(
+					message: "The list must be active in order to modify it.");
+			}
+
+			return _list.IsActive;
 		}
 
 		async Task ExecuteShowOptions()
@@ -97,11 +127,11 @@ namespace TodoApp.ViewModels
 			}
 			else if (action == "Deactivate")
 			{
-				await ChangeListState(false);
+				await _repo.DeactivateList(_list.Id);
 			}
 			else if (action == "Activate")
 			{
-				await ChangeListState(true);
+				await _repo.ActivateList(_list.Id);
 			}
 		}
 
@@ -110,11 +140,6 @@ namespace TodoApp.ViewModels
 			await this._repo.RemoveList(this._list.Id);
 
 			await NavigationService.Close(this);
-		}
-
-		async Task ChangeListState(bool isActive)
-		{
-			// todo
 		}
 
 		public class Parameter
