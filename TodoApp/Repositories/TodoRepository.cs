@@ -21,9 +21,11 @@ namespace TodoApp.Repositories
 
 		Task ActivateList(Guid listId);
 
-		Task<IEnumerable<ToDoItem>> GetItems(Guid listId);
+		Task<IEnumerable<TodoItem>> GetItems(Guid listId);
 
-		Task<ToDoItem> AddItem(Guid listId, ToDoItem item);
+		Task<TodoItem> AddItem(Guid listId, TodoItem item);
+
+		Task UpdateItem(Guid listId, Guid itemId, TodoItem item);
 
 		Task RemoveItem(Guid listId, Guid itemId);
 	}
@@ -47,11 +49,13 @@ namespace TodoApp.Repositories
 
 		public Task RemoveList(Guid id) => base.Delete<TodoList>(LIST_KEY, id);
 
-		public Task<IEnumerable<ToDoItem>> GetItems(Guid listId) => base.Get<ToDoItem>(KeyForItem(listId));
+		public Task<IEnumerable<TodoItem>> GetItems(Guid listId) => base.Get<TodoItem>(KeyForItem(listId));
 
-		public Task<ToDoItem> AddItem(Guid listId, ToDoItem item) => base.Create<ToDoItem>(KeyForItem(listId), item);
+		public Task<TodoItem> AddItem(Guid listId, TodoItem item) => base.Create<TodoItem>(KeyForItem(listId), item);
 
-		public Task RemoveItem(Guid listId, Guid itemId) => base.Delete<ToDoItem>(KeyForItem(listId), itemId);
+		public Task RemoveItem(Guid listId, Guid itemId) => base.Delete<TodoItem>(KeyForItem(listId), itemId);
+
+		public Task UpdateItem(Guid listId, Guid itemId, TodoItem item) => base.Update(KeyForItem(listId), itemId, item);
 
 		public async Task DeactivateList(Guid listId)
 		{

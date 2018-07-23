@@ -13,10 +13,13 @@ namespace TodoApp.iOS.Views
 	partial class ListInfoView
 	{
 		[Outlet]
-		UIKit.UIButton AddButton { get; set; }
+		UIKit.UIBarButtonItem AddButton { get; set; }
 
 		[Outlet]
 		UIKit.UITextView DescrptionTextView { get; set; }
+
+		[Outlet]
+		UIKit.UITableView TableView { get; set; }
 
 		[Outlet]
 		UIKit.UITextField TitleTextField { get; set; }
@@ -31,6 +34,11 @@ namespace TodoApp.iOS.Views
 			if (DescrptionTextView != null) {
 				DescrptionTextView.Dispose ();
 				DescrptionTextView = null;
+			}
+
+			if (TableView != null) {
+				TableView.Dispose ();
+				TableView = null;
 			}
 
 			if (TitleTextField != null) {

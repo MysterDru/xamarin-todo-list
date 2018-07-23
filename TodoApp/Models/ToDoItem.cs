@@ -1,16 +1,20 @@
 ﻿using System;
+using Newtonsoft.Json;
+
 namespace TodoApp.Models
 {
-	public class ToDoItem : BaseModel
-    {
+	[PropertyChanged.AddINotifyPropertyChangedInterface]
+	public class TodoItem : BaseModel
+	{
 		public string Title { get; set; }
-
-		public string Notes { get; set; }
-
-		public DateTime DueDate { get; set; }
 
 		public bool IsCompleted { get; set; }
 
 		public Guid ListId { get; set; }
-    }
+
+		public DateTime? CompletedOn { get; set; }
+
+		[JsonIgnore]
+		public string Description => CompletedOn.HasValue ? $"Completed at {CompletedOn.Value.ToString("g")}" : null;
+	}
 }

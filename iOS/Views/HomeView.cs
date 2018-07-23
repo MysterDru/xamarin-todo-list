@@ -11,7 +11,7 @@ namespace TodoApp.iOS.Views
 {
 	[MvxFromStoryboard]
 	[MvxRootPresentation(WrapInNavigationController = true)]
-	public partial class HomeView : MvxTableViewController
+	public partial class HomeView : MvxViewController<HomeViewModel>
 	{
 		public HomeView(IntPtr handle)
 			: base(handle)
@@ -22,7 +22,9 @@ namespace TodoApp.iOS.Views
 		{
 			base.ViewDidLoad();
 
-			var source = new MvxStandardTableViewSource(this.TableView, "TitleText Title;");
+			NavigationItem.BackBarButtonItem = new UIBarButtonItem("Back", UIBarButtonItemStyle.Plain, null);
+
+			var source = new CustomDataSource(this, this.TableView, new NSString("TodoListViewCell"));
 			TableView.Source = source;
 
 			var set = this.CreateBindingSet<HomeView, ViewModels.HomeViewModel>();
@@ -38,6 +40,30 @@ namespace TodoApp.iOS.Views
 			set.Bind(AddButton)
 			   .To(vm => vm.AddNewItem);
 			set.Apply();
+		}
+
+		private class CustomDataSource : MvxStandardTableViewSource
+		{
+			HomeView viewController;
+			public CustomDataSource(HomeView parentView, UITableView tableview, NSString identifier)
+				: base(tableview, identifier)
+			{
+				viewController = parentView;
+			}
+
+			public override UITableViewRowAction[] EditActionsForRow(UITableView tableView, NSIndexPath indexPath)
+			{
+				UITableViewRowAction deleteButton = UITableViewRowAction.Create(
+				UITableViewRowActionStyle.Default,
+				"Delete",
+				delegate
+				{
+					var item = GetItemAt(indexPath) as Models.TodoList;
+					viewController.ViewModel.DeleteList.Execute(item);
+
+				});
+				return new UITableViewRowAction[] { deleteButton };
+			}
 		}
 	}
 }

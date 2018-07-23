@@ -13,7 +13,7 @@ namespace TodoApp.iOS.Views
 {
 	[MvxFromStoryboard]
 	[MvxChildPresentation]
-	public partial class ListInfoView : MvxTableViewController
+	public partial class ListInfoView : MvxViewController<ViewModels.ListInfoViewModel>
 	{
 		public ListInfoView(IntPtr handle)
 			: base(handle)
@@ -24,6 +24,8 @@ namespace TodoApp.iOS.Views
 		{
 			base.ViewDidLoad();
 
+			NavigationItem.BackBarButtonItem = new UIBarButtonItem("Back", UIBarButtonItemStyle.Plain, null);
+
 			this.Title = "Todo List Info";
 
 			UpdateDescriptionStyle();
@@ -33,7 +35,8 @@ namespace TodoApp.iOS.Views
 
 			this.NavigationItem.RightBarButtonItems = new UIBarButtonItem[] { options, save };
 
-			var source = new MvxStandardTableViewSource(this.TableView, "TitleText Title;");
+
+			var source = new CustomDataSource(this, TableView, new NSString("ToDoItemCell"));
 			TableView.Source = source;
 
 			var set = this.CreateBindingSet<ListInfoView, ViewModels.ListInfoViewModel>();
@@ -43,6 +46,9 @@ namespace TodoApp.iOS.Views
 			set.Bind(source)
 			   .For(x => x.ItemsSource)
 			   .To(vm => vm.Items);
+			set.Bind(source)
+			   .For(x => x.SelectionChangedCommand)
+			   .To(vm => vm.CompleteItem);
 			set.Bind(TitleTextField)
 			   .To(vm => vm.ListTitle);
 			set.Bind(DescrptionTextView)
@@ -58,11 +64,37 @@ namespace TodoApp.iOS.Views
 
 		private void UpdateDescriptionStyle()
 		{
+			// make the text view look like a text field
 			DescrptionTextView.Layer.BackgroundColor = UIColor.White.CGColor;
 			DescrptionTextView.Layer.BorderColor = UIColor.Gray.CGColor;
-			DescrptionTextView.Layer.BorderWidth = 0.5f;
-			DescrptionTextView.Layer.CornerRadius = 6.0f;
+			DescrptionTextView.Layer.BorderWidth = 0.25f;
+			DescrptionTextView.Layer.CornerRadius = 4.0f;
 			DescrptionTextView.Layer.MasksToBounds = true;
 		}
+
+		private class CustomDataSource : MvxStandardTableViewSource
+		{
+			ListInfoView viewController;
+			public CustomDataSource(ListInfoView parentView, UITableView tableview, NSString identifier)
+				: base(tableview, identifier)
+			{
+				viewController = parentView;
+			}
+
+			public override UITableViewRowAction[] EditActionsForRow(UITableView tableView, NSIndexPath indexPath)
+			{
+				UITableViewRowAction deleteButton = UITableViewRowAction.Create(
+				UITableViewRowActionStyle.Default,
+				"Delete",
+				delegate
+				{
+					var item = GetItemAt(indexPath) as Models.TodoItem;
+					viewController.ViewModel.DeleteItem.Execute(item);
+
+				});
+				return new UITableViewRowAction[] { deleteButton };
+			}
+		}
+
 	}
 }

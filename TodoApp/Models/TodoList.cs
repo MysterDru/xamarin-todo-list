@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace TodoApp.Models
 {
+	[PropertyChanged.AddINotifyPropertyChangedInterface]
 	public class TodoList : BaseModel
 	{
 		public string Title { get; set; }

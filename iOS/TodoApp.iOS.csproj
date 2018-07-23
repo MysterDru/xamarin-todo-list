@@ -124,6 +124,7 @@
     <Folder Include="Resources\" />
     <Folder Include="Views\" />
     <Folder Include="Assets.xcassets\ic_more.imageset\" />
+    <Folder Include="Converters\" />
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="LaunchScreen.storyboard" />
@@ -151,6 +152,12 @@
     <Compile Include="Views\ListInfoView.designer.cs">
       <DependentUpon>ListInfoView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\TodoItemViewCell.cs" />
+    <Compile Include="Views\TodoItemViewCell.designer.cs">
+      <DependentUpon>TodoItemViewCell.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\TodoListViewCell.cs" />
+    <Compile Include="Converters\BoolToAccessoryConverter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

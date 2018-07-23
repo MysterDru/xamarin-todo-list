@@ -17,17 +17,20 @@ namespace TodoApp.ViewModels
 		Models.TodoList _list;
 
 		public string ListTitle { get; private set; }
+
 		public string ListDescription { get; private set; }
 
 		public IMvxCommand SaveList => new MvxAsyncCommand(ExecuteSaveList);
 
-		public ObservableCollection<Models.ToDoItem> Items { get; private set; }
+		public ObservableCollection<Models.TodoItem> Items { get; private set; }
 
 		public IMvxCommand ShowOptions => new MvxAsyncCommand(ExecuteShowOptions);
 
 		public IMvxCommand AddNewItem => new MvxAsyncCommand(ExecuteAddNewtItem);
 
-		public IMvxCommand DeleteItem => new MvxAsyncCommand<Models.ToDoItem>(ExecuteDeleteItem);
+		public IMvxCommand CompleteItem => new MvxAsyncCommand<Models.TodoItem>(ExecuteCompleteItem);
+
+		public IMvxCommand DeleteItem => new MvxAsyncCommand<Models.TodoItem>(ExecuteDeleteItem);
 
 		public ListInfoViewModel(
 			ITodoRepository repo,
@@ -39,7 +42,8 @@ namespace TodoApp.ViewModels
 
 		public override async Task Initialize()
 		{
-			//return base.Initialize();
+			await base.Initialize();
+
 			Title = "List Info";
 
 			ListTitle = _list.Title;
@@ -47,12 +51,24 @@ namespace TodoApp.ViewModels
 
 			var items = await _repo.GetItems(_list.Id);
 
-			Items = new ObservableCollection<Models.ToDoItem>(items ?? new List<Models.ToDoItem>());
+			Items = new ObservableCollection<Models.TodoItem>(items ?? new List<Models.TodoItem>());
 		}
 
 		public override void Prepare(Parameter parameter)
 		{
 			_list = parameter.List;
+		}
+
+		async Task ExecuteCompleteItem(Models.TodoItem item)
+		{
+			item.IsCompleted = true;
+			item.CompletedOn = DateTime.UtcNow;
+
+			await _repo.UpdateItem(_list.Id, item.Id, item);
+
+			var orderd = Items.OrderBy(x => x.CompletedOn);
+
+			this.Items = new ObservableCollection<TodoItem>(orderd);
 		}
 
 		async Task ExecuteSaveList()
@@ -71,7 +87,7 @@ namespace TodoApp.ViewModels
 
 		async Task ExecuteAddNewtItem()
 		{
-			if (await CheckActive())
+			if (await CheckIfListIsActive())
 			{
 				var result = await _dialogs.PromptAsync(
 					message: "Name Task",
@@ -79,7 +95,7 @@ namespace TodoApp.ViewModels
 
 				var newItemTitle = result.Value;
 
-				var item = new Models.ToDoItem
+				var item = new Models.TodoItem
 				{
 					Title = newItemTitle
 				};
@@ -90,25 +106,23 @@ namespace TodoApp.ViewModels
 			}
 		}
 
-		private async Task ExecuteDeleteItem(ToDoItem arg)
+		async Task ExecuteDeleteItem(TodoItem arg)
 		{
-			if (await CheckActive())
+			bool confirm = await _dialogs.ConfirmAsync(
+				"Are you sure you want to delete this item?",
+				$"Delete {arg.Title}",
+				"Yes",
+				"Cancel");
+
+			if (confirm)
 			{
-				await _repo.RemoveItem(_list.Id, arg.Id);
+				if (await CheckIfListIsActive())
+				{
+					await _repo.RemoveItem(_list.Id, arg.Id);
 
-				Items.Remove(arg);
+					Items.Remove(arg);
+				}
 			}
-		}
-
-		async Task<bool> CheckActive()
-		{
-			if (!_list.IsActive)
-			{
-				await _dialogs.AlertAsync(
-					message: "The list must be active in order to modify it.");
-			}
-
-			return _list.IsActive;
 		}
 
 		async Task ExecuteShowOptions()
@@ -137,9 +151,29 @@ namespace TodoApp.ViewModels
 
 		async Task DeleteList()
 		{
-			await this._repo.RemoveList(this._list.Id);
+			bool confirm = await _dialogs.ConfirmAsync(
+				"Are you sure you want to delete this list?",
+				$"Delete {_list.Title}",
+				"Yes",
+				"Cancel");
 
-			await NavigationService.Close(this);
+			if (confirm && await CheckIfListIsActive())
+			{
+				await this._repo.RemoveList(this._list.Id);
+
+				await NavigationService.Close(this);
+			}
+		}
+
+		async Task<bool> CheckIfListIsActive()
+		{
+			if (!_list.IsActive)
+			{
+				await _dialogs.AlertAsync(
+					message: "The list must be active in order to modify it.");
+			}
+
+			return _list.IsActive;
 		}
 
 		public class Parameter

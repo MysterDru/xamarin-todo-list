@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Acr.UserDialogs;
@@ -18,11 +19,13 @@ namespace TodoApp.ViewModels
 
 		bool _isInitialized = false;
 
-		public IEnumerable<Models.TodoList> TodoLists { get; private set; }
+		public ObservableCollection<Models.TodoList> TodoLists { get; private set; }
 
 		public IMvxCommand AddNewItem => new MvxAsyncCommand(ExecuteAddNewtItem);
 
 		public IMvxCommand SelectItem => new MvxAsyncCommand<Models.TodoList>(ExecuteSelectItem);
+
+		public IMvxCommand DeleteList => new MvxAsyncCommand<Models.TodoList>(ExecuteDeleteItem);
 
 		public HomeViewModel(IUserDialogs dialogs, ITodoRepository repo)
 		{
@@ -34,8 +37,8 @@ namespace TodoApp.ViewModels
 		{
 			base.ViewAppearing();
 
-			// reload data in the event "IsActive" changed
-			// or a list was deleted
+			// for simplicity, just reload data whenever the view appears
+			// handles when properites about the list change
 			if (_isInitialized)
 			{
 				await LoadData();
@@ -44,7 +47,9 @@ namespace TodoApp.ViewModels
 
 		public override async Task Initialize()
 		{
-			this.Title = "Drew's To-Do";
+			await base.Initialize();
+
+			this.Title = "To-Do List";
 
 			await LoadData();
 
@@ -60,7 +65,7 @@ namespace TodoApp.ViewModels
 		{
 			var lists = await _repo.GetLists();
 
-			TodoLists = lists ?? new List<Models.TodoList>();
+			TodoLists = new ObservableCollection<TodoList>(lists ?? new List<Models.TodoList>());
 		}
 
 		private async Task ExecuteAddNewtItem()
@@ -81,16 +86,26 @@ namespace TodoApp.ViewModels
 					cancelText: "No");
 			}
 
+			_dialogs.ShowLoading(string.Empty);
+
 			var created = await _repo.AddList(new Models.TodoList
 			{
-				Title = newItemTitle,
-				IsActive = makeActive
+				Title = newItemTitle
 			});
 
-			var copy = TodoLists.ToList();
-			copy.Add(created);
+			// if user wants to make it active, activate this one,
+			// calling the repo method will deactivate all other lists
+			if(makeActive)
+			{
+				await _repo.ActivateList(created.Id);
+			}
 
-			TodoLists = copy;
+			TodoLists.Add(created);
+
+			_dialogs.HideLoading();
+
+			// navigate to the new list
+			SelectItem.Execute(created);
 		}
 
 		private async Task ExecuteSelectItem(TodoList arg)
@@ -99,6 +114,22 @@ namespace TodoApp.ViewModels
 			{
 				List = arg
 			});
+		}
+
+		private async Task ExecuteDeleteItem(TodoList item)
+		{
+			bool confirm = await _dialogs.ConfirmAsync(
+				"Are you sure you want to delete this list?",
+				$"Delete {item.Title}",
+				"Yes",
+				"Cancel");
+
+			if (confirm)
+			{
+				await _repo.RemoveList(item.Id);
+
+				TodoLists.Remove(item);
+			}
 		}
 	}
 }

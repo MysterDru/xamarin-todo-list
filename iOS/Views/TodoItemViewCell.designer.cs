@@ -9,25 +9,16 @@ using System.CodeDom.Compiler;
 
 namespace TodoApp.iOS.Views
 {
-	[Register ("HomeView")]
-	partial class HomeView
+	partial class TodoItemViewCell
 	{
 		[Outlet]
-		UIKit.UIBarButtonItem AddButton { get; set; }
-
-		[Outlet]
-		UIKit.UITableView TableView { get; set; }
+		UIKit.UILabel ItemTitle { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (TableView != null) {
-				TableView.Dispose ();
-				TableView = null;
-			}
-
-			if (AddButton != null) {
-				AddButton.Dispose ();
-				AddButton = null;
+			if (ItemTitle != null) {
+				ItemTitle.Dispose ();
+				ItemTitle = null;
 			}
 		}
 	}
